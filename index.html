@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ANANMANAN — Thank You Gift Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #101114;
+    --muted: #6b6f78;
+    --line: #e7e8ec;
+    --soft: #f5f6f8;
+    --silver-1: #f1f2f5;
+    --silver-2: #dfe2e8;
+    --accent: #101114;
+    --ok: #1f9d63;
+    --ease: cubic-bezier(.22, 1, .36, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: 'Sora', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+  }
+
+  /* soft drifting background shapes */
+  .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .bg span {
+    position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55;
+    background: radial-gradient(circle at 30% 30%, #eef0f5, #ffffff 70%);
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+  .bg span:nth-child(1) { width: 420px; height: 420px; top: -120px; left: -100px; }
+  .bg span:nth-child(2) { width: 360px; height: 360px; bottom: -120px; right: -80px; animation-delay: -6s; background: radial-gradient(circle at 30% 30%, #f0eef7, #ffffff 70%); }
+  @keyframes drift { to { transform: translate(40px, 30px) scale(1.08); } }
+
+  /* loader */
+  .loader {
+    position: fixed; inset: 0; z-index: 10; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+    transition: opacity .7s var(--ease), visibility .7s;
+  }
+  .loader.done { opacity: 0; visibility: hidden; }
+  .loader .brand { font-weight: 600; letter-spacing: .32em; font-size: 15px; padding-left: .32em; }
+  .loader .bar { width: 180px; height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .loader .bar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .12s linear; }
+  .loader .pct { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  main {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 460px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+
+  /* entrance sequence: one orchestrated reveal after load */
+  .rise { opacity: 0; transform: translateY(18px); }
+  body.ready .rise { animation: rise .9s var(--ease) forwards; animation-delay: calc(var(--i, 0) * 110ms + 150ms); }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  .status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--muted);
+    padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff;
+  }
+  .status svg { width: 16px; height: 16px; }
+  .status circle { fill: none; stroke: var(--ok); stroke-width: 2; }
+  .status path { fill: none; stroke: var(--ok); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 20; stroke-dashoffset: 20; }
+  body.ready .status path { animation: draw .7s .9s var(--ease) forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  h1 {
+    margin-top: 22px;
+    font-size: clamp(30px, 8vw, 40px);
+    font-weight: 600; letter-spacing: -.03em; line-height: 1.1;
+  }
+  .lead {
+    margin-top: 14px; max-width: 380px;
+    font-size: 14.5px; line-height: 1.7; color: var(--muted); font-weight: 300;
+  }
+
+  /* card */
+  .scene { margin-top: 38px; width: 100%; perspective: 1400px; }
+  .tilt { transition: transform .5s var(--ease); transform-style: preserve-3d; }
+  .float { animation: float 6s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-8px); } }
+
+  .card {
+    position: relative; display: block; width: 100%;
+    aspect-ratio: 1.586 / 1;
+    border: 0; background: none; cursor: pointer; padding: 0; color: inherit; font: inherit;
+    transform-style: preserve-3d;
+    transition: transform .9s var(--ease);
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 22px;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .card:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; }
+
+  .face {
+    position: absolute; inset: 0; border-radius: 22px;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    padding: 22px 24px; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between; text-align: left;
+    border: 1px solid var(--line);
+    box-shadow: 0 1px 2px rgba(16,17,20,.04), 0 18px 40px -14px rgba(16,17,20,.16), 0 40px 70px -30px rgba(16,17,20,.14);
+  }
+  .front { background: linear-gradient(135deg, #ffffff 0%, var(--silver-1) 100%); }
+  .back  { background: #ffffff; transform: rotateY(180deg); }
+
+  /* moving sheen */
+  .face::after {
+    content: ""; position: absolute; top: -20%; bottom: -20%; width: 45%; left: -60%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.9), transparent);
+    transform: skewX(-18deg);
+    animation: sheen 5.5s 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes sheen { 0% { left: -60%; } 35%, 100% { left: 130%; } }
+
+  /* subtle ring pattern on front */
+  .rings { position: absolute; right: -70px; top: -70px; width: 260px; height: 260px; pointer-events: none; }
+  .rings i { position: absolute; inset: 0; border: 1px solid var(--silver-2); border-radius: 50%; }
+  .rings i:nth-child(2) { inset: 34px; }
+  .rings i:nth-child(3) { inset: 68px; }
+  .rings i:nth-child(4) { inset: 102px; }
+
+  .row { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
+  .logo { font-weight: 700; letter-spacing: .26em; font-size: 13px; }
+  .tag { font-size: 11px; color: var(--muted); }
+  .label { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+  .value { font-size: clamp(34px, 10vw, 46px); font-weight: 600; letter-spacing: -.03em; line-height: 1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .value small { font-size: .42em; font-weight: 500; color: var(--muted); margin-right: 6px; letter-spacing: 0; }
+  .hint { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .hint b { display: inline-block; animation: spin 3.2s linear infinite; font-weight: 400; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .code-wrap { position: relative; z-index: 1; }
+  .code {
+    font-size: clamp(26px, 8vw, 34px); font-weight: 600; letter-spacing: .04em; margin-top: 8px;
+  }
+  .code span { display: inline-block; opacity: 0; transform: translateY(8px); }
+  .card.flipped .code span { animation: pop .5s var(--ease) forwards; animation-delay: calc(.45s + var(--n) * 45ms); }
+  @keyframes pop { to { opacity: 1; transform: none; } }
+  .back p { position: relative; z-index: 1; font-size: 12px; line-height: 1.6; color: var(--muted); font-weight: 300; max-width: 300px; }
+
+  /* actions */
+  .tap-note { margin-top: 26px; font-size: 12.5px; color: var(--muted); }
+  .actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; }
+  .btn {
+    font: inherit; font-size: 13.5px; font-weight: 500; text-decoration: none; cursor: pointer;
+    padding: 13px 24px; border-radius: 999px; border: 1px solid var(--ink);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform .3s var(--ease), background .3s, color .3s, box-shadow .3s;
+    min-width: 150px;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .btn.primary { background: var(--ink); color: #fff; }
+  .btn.primary:hover { box-shadow: 0 10px 24px -10px rgba(16,17,20,.55); transform: translateY(-2px); }
+  .btn.ghost { background: #fff; color: var(--ink); }
+  .btn.ghost:hover { background: var(--soft); }
+  .btn.copied { background: var(--ok); border-color: var(--ok); color: #fff; }
+
+  .foot { margin-top: 34px; font-size: 12px; color: var(--muted); }
+  .foot a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--silver-2); transition: border-color .3s; }
+  .foot a:hover { border-color: var(--ink); }
+
+  /* sparkles on flip */
+  .spark { position: fixed; z-index: 5; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); pointer-events: none; opacity: 0; }
+
+  @media (max-width: 420px) {
+    .face { padding: 18px 18px; border-radius: 18px; }
+    .card { border-radius: 18px; }
+    .btn { flex: 1 1 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::after { animation: none !important; transition-duration: .01ms !important; }
+    .rise { opacity: 1; transform: none; }
+    .code span { opacity: 1; transform: none; }
+    .status path { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true"><span></span><span></span></div>
+
+<div class="loader" id="loader" role="status" aria-live="polite">
+  <div class="brand">ANANMANAN</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="pct" id="pct">0%</div>
+</div>
+
+<main>
+  <div class="status rise" style="--i:0">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M6 10.3l2.8 2.8L14 7.6"/></svg>
+    Order confirmed
+  </div>
+
+  <h1 class="rise" style="--i:1">You've got a gift card</h1>
+  <p class="lead rise" style="--i:2">Thank you for your order. As a token of appreciation, ANANMANAN has added a gift card to your account. Tap the card to see your code.</p>
+
+  <div class="scene rise" style="--i:3">
+    <div class="tilt" id="tilt">
+      <div class="float">
+        <button class="card" id="card" type="button" aria-pressed="false" aria-label="Gift card worth Rs. 1,500. Tap to flip and show your code.">
+          <div class="face front">
+            <div class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <div class="row">
+              <span class="logo">ANANMANAN</span>
+              <span class="tag">Thank you gift</span>
+            </div>
+            <div style="position:relative;z-index:1">
+              <div class="label">Gift card value</div>
+              <div class="value"><small>Rs.</small><span id="amount" data-to="1500">0</span></div>
+            </div>
+            <div class="row" style="align-items:flex-end">
+              <span class="hint"><b>↻</b> Tap to flip</span>
+              <span class="tag">Valid 12 months</span>
+            </div>
+          </div>
+
+          <div class="face back">
+            <div class="row">
+              <span class="logo">ANANMANAN</span>
+              <span class="tag">Rs. 1,500</span>
+            </div>
+            <div class="code-wrap">
+              <div class="label">Your redeem code</div>
+              <div class="code" id="code" aria-label="AM-Japura"></div>
+            </div>
+            <p>Enter this code at checkout on ananmanan.store to use your balance.</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="tap-note rise" style="--i:4" id="note">Tap the card to reveal your redeem code</p>
+
+  <div class="actions rise" style="--i:5">
+    <button class="btn ghost" id="copy" type="button">Copy gift code</button>
+    <a class="btn primary" href="https://ananmanan.store" target="_blank" rel="noopener">Shop now</a>
+  </div>
+
+  <p class="foot rise" style="--i:6">A confirmation has also been sent to your inbox &nbsp;·&nbsp; <a href="https://ananmanan.store" target="_blank" rel="noopener">ananmanan.store</a></p>
+</main>
+
+<script>
+(function () {
+  var CODE = 'AM-Japura';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* loader */
+  var bar = document.getElementById('bar'), pct = document.getElementById('pct'), loader = document.getElementById('loader');
+  var p = 0;
+  function finishLoad() {
+    loader.classList.add('done');
+    document.body.classList.add('ready');
+    countUp();
+  }
+  if (reduce) { finishLoad(); }
+  else {
+    var t = setInterval(function () {
+      p = Math.min(100, p + Math.random() * 14 + 5);
+      bar.style.width = p + '%';
+      pct.textContent = Math.floor(p) + '%';
+      if (p >= 100) { clearInterval(t); setTimeout(finishLoad, 350); }
+    }, 90);
+  }
+
+  /* count up amount */
+  function countUp() {
+    var el = document.getElementById('amount'), to = +el.dataset.to;
+    if (reduce) { el.textContent = to.toLocaleString('en-US'); return; }
+    var start = null, dur = 1600, delay = 600;
+    function step(ts) {
+      if (!start) start = ts + delay;
+      var k = Math.max(0, Math.min(1, (ts - start) / dur));
+      var e = 1 - Math.pow(1 - k, 4);
+      el.textContent = Math.round(to * e).toLocaleString('en-US');
+      if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* build code letters */
+  var codeEl = document.getElementById('code');
+  CODE.split('').forEach(function (ch, i) {
+    var s = document.createElement('span');
+    s.style.setProperty('--n', i);
+    s.textContent = ch;
+    codeEl.appendChild(s);
+  });
+
+  /* flip */
+  var card = document.getElementById('card'), note = document.getElementById('note');
+  card.addEventListener('click', function (e) {
+    var flipped = card.classList.toggle('flipped');
+    card.setAttribute('aria-pressed', flipped);
+    note.textContent = flipped ? 'Tap the card again to flip it back' : 'Tap the card to reveal your redeem code';
+    if (flipped && !reduce) sparkle(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2);
+  });
+
+  /* gentle pointer tilt (desktop) */
+  var tilt = document.getElementById('tilt');
+  if (!reduce && window.matchMedia('(hover: hover)').matches) {
+    window.addEventListener('pointermove', function (e) {
+      var x = (e.clientX / window.innerWidth - .5) * 2, y = (e.clientY / window.innerHeight - .5) * 2;
+      tilt.style.transform = 'rotateX(' + (-y * 5) + 'deg) rotateY(' + (x * 7) + 'deg)';
+    });
+    document.addEventListener('pointerleave', function () { tilt.style.transform = ''; });
+  }
+
+  /* sparkles */
+  function sparkle(cx, cy) {
+    for (var i = 0; i < 16; i++) {
+      var s = document.createElement('i');
+      s.className = 'spark';
+      s.style.left = cx + 'px'; s.style.top = cy + 'px';
+      s.style.background = i % 3 ? '#101114' : '#b9bfcc';
+      document.body.appendChild(s);
+      var a = Math.random() * Math.PI * 2, d = 50 + Math.random() * 90;
+      s.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: 'translate(' + Math.cos(a) * d + 'px,' + Math.sin(a) * d + 'px) scale(0)', opacity: 0 }
+      ], { duration: 800 + Math.random() * 400, easing: 'cubic-bezier(.22,1,.36,1)' }).onfinish = (function (n) { return function () { n.remove(); }; })(s);
+    }
+  }
+
+  /* copy */
+  var copyBtn = document.getElementById('copy');
+  copyBtn.addEventListener('click', function () {
+    function done() {
+      copyBtn.textContent = 'Copied';
+      copyBtn.classList.add('copied');
+      setTimeout(function () { copyBtn.textContent = 'Copy gift code'; copyBtn.classList.remove('copied'); }, 1800);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(CODE).then(done, fallback);
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = CODE; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
